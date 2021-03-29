@@ -1,5 +1,5 @@
 {
-  "name": "@stuckinaboot/mongo-tenant",
+  "name": "mongo-tenant-unsafe",
   "version": "1.8.0",
   "description": "The mongo-tenant is a multi-tenancy plugin for mongoose.",
   "author": "RealMQ GmbH <service@realmq.com>",

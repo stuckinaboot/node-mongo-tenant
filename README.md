@@ -7,6 +7,10 @@
 [![npm version](https://badge.fury.io/js/mongo-tenant.svg)](https://badge.fury.io/js/mongo-tenant)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/craftup/node-mongo-tenant/master/LICENSE)
 
+## Features included here but not in mongo-tenant
+
+- `select` is an optional config argument and is default false (so tenantId won't be included in loaded mongo documents)
+
 ## Prelude
 
 There are 3 ways of implementing multi-tenancy in mongoDB:
@@ -18,7 +22,7 @@ There are 3 ways of implementing multi-tenancy in mongoDB:
 ## About
 
 The mongo tenant is a highly configurable mongoose plugin solving multi-tenancy problems on
-document level (for now...). 
+document level (for now...).
 It creates a tenant-reference field and takes care of unique indexes.
 Also it provides access to tenant-bound model-classes, that prohibit the
 exploid of the given tenant scope.
@@ -32,7 +36,7 @@ Mongo tenant is compatible with mongoose 4 and 5.
 
 ## Incompatibilities
 
-* Mongo Tenant does not work with mongoose 4.8.1-4.8.2 see [Automattic/mongoose#4947](https://github.com/Automattic/mongoose/issues/4947).
+- Mongo Tenant does not work with mongoose 4.8.1-4.8.2 see [Automattic/mongoose#4947](https://github.com/Automattic/mongoose/issues/4947).
 
 ## Install
 
@@ -47,13 +51,13 @@ $ yarn add mongo-tenant
 Register the plugin on the relevant mongoose schema.
 
 ```javascript
-const mongoose = require('mongoose');
-const mongoTenant = require('mongo-tenant');
+const mongoose = require("mongoose");
+const mongoTenant = require("mongo-tenant");
 
 const MySchema = new mongoose.Schema({});
 MySchema.plugin(mongoTenant);
 
-const MyModel = mongoose.model('MyModel', MySchema);
+const MyModel = mongoose.model("MyModel", MySchema);
 ```
 
 Retrieve the model in tenant scope with static `byTenant` method. This will return
@@ -62,15 +66,14 @@ It has the exactly same interface as any other mongoose model but prevents
 the access to other tenant scopes.
 
 ```javascript
-const MyTenantBoundModel = MyModel.byTenant('some-tenant-id');
+const MyTenantBoundModel = MyModel.byTenant("some-tenant-id");
 
-(new MyTenantBoundModel()).getTenantId() === 'some-tenant-id'; // true
+new MyTenantBoundModel().getTenantId() === "some-tenant-id"; // true
 
 // silently ignore other tenant scope
-(new MyTenantBoundModel({
-  tenantId: 'some-other-tenant-id'
-})).getTenantId() === 'some-tenant-id'; // true
-
+new MyTenantBoundModel({
+  tenantId: "some-other-tenant-id",
+}).getTenantId() === "some-tenant-id"; // true
 ```
 
 You can check for tenant context of a model class or instance by checking
@@ -93,8 +96,8 @@ The mongo-tenant takes care of the tenant-reference field, so that you
 will be able to use your existing schema definitions and just plugin the
 mongo-tenant without changing a single line of schema definition.
 
-But under the hood the mongo-tenant creates an indexed field *(tenantId by default)*
-and includes this in all defined unique indexes. So by default, all unique 
+But under the hood the mongo-tenant creates an indexed field _(tenantId by default)_
+and includes this in all defined unique indexes. So by default, all unique
 fields (and compound indexes) are unique for a single tenant id.
 
 You may have use-cases where you want to archive global uniqueness.
@@ -105,19 +108,22 @@ index you can set the `preserveUniqueKey` config option to true.
 const MySchema = new mongoose.Schema({
   someField: {
     unique: true,
-    preserveUniqueKey: true
+    preserveUniqueKey: true,
   },
   anotherField: String,
-  yetAnotherField: String
+  yetAnotherField: String,
 });
 
-MySchema.index({
-  anotherField: 1,
-  yetAnotherField: 1
-}, {
-  unique: true,
-  preserveUniqueKey: true
-});
+MySchema.index(
+  {
+    anotherField: 1,
+    yetAnotherField: 1,
+  },
+  {
+    unique: true,
+    preserveUniqueKey: true,
+  }
+);
 ```
 
 ### Context bound models and populate
@@ -130,17 +136,17 @@ bound to the same tenant context.
 ```javascript
 const AuthorSchema = new mongoose.Schema({});
 AuthorSchema.plugin(mongoTenant);
-const AuthorModel = mongoose.model('author', AuthorSchema);
+const AuthorModel = mongoose.model("author", AuthorSchema);
 
 const BookSchema = new mongoose.Schema({
-  author: { type: mongoose.Schema.Types.ObjectId, ref: 'author' }
+  author: { type: mongoose.Schema.Types.ObjectId, ref: "author" },
 });
 BookSchema.plugin(mongoTenant);
-const BookModel = mongoose.model('book', BookSchema);
+const BookModel = mongoose.model("book", BookSchema);
 
-const BoundBookModel = BookModel.byTenant('some-tenant-id');
-BoundBookModel.model('author'); // return author model bound to "some-tenant-id"
-BoundBookModel.db.model('author'); // return author model bound to "some-tenant-id"
+const BoundBookModel = BookModel.byTenant("some-tenant-id");
+BoundBookModel.model("author"); // return author model bound to "some-tenant-id"
+BoundBookModel.db.model("author"); // return author model bound to "some-tenant-id"
 ```
 
 ### Configuration
@@ -159,7 +165,7 @@ const config = {
   /**
    * The name of the tenant id field. Default: tenantId
    */
-  tenantIdKey: 'customerId',
+  tenantIdKey: "customerId",
 
   /**
    * The type of the tenant id field. Default: String
@@ -169,18 +175,18 @@ const config = {
   /**
    * The name of the tenant id getter method. Default: getTenantId
    */
-  tenantIdGetter: 'getCustomerId',
+  tenantIdGetter: "getCustomerId",
 
   /**
    * The name of the tenant bound model getter method. Default: byTenant
    */
-  accessorMethod: 'byCustomer',
+  accessorMethod: "byCustomer",
 
   /**
    * Enforce tenantId field to be set. Default: false
    * NOTE: this option will become enabled by default in mongo-tenant@2.0
    */
-  requireTenantId: true
+  requireTenantId: true,
 };
 
 SomeSchema.plugin(mongoTenant, config);
