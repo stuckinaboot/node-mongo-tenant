@@ -1,11 +1,12 @@
 {
-  "name": "mongo-tenant",
+  "name": "@stuckinaboot/mongo-tenant",
   "version": "1.8.0",
   "description": "The mongo-tenant is a multi-tenancy plugin for mongoose.",
   "author": "RealMQ GmbH <service@realmq.com>",
   "contributors": [
     "Alrik Zachert <alrik@realmq.com>",
-    "Henning Panke <henning@realmq.com>"
+    "Henning Panke <henning@realmq.com>",
+    "Aspyn Palatnick"
   ],
   "keywords": [
     "multi-tenancy",

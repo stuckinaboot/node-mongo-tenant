@@ -5,7 +5,7 @@
  * @license     https://github.com/craftup/node-mongo-tenant/blob/master/LICENSE MIT
  */
 
-'use strict';
+"use strict";
 
 /**
  * MongoTenant is a class aimed for use in mongoose schema plugin scope.
@@ -26,6 +26,7 @@ class MongoTenant {
    * @param {string} [options.tenantIdGetter] - The name of the tenant id getter method. Default: **getTenantId**.
    * @param {string} [options.accessorMethod] - The name of the tenant bound model getter method. Default: **byTenant**.
    * @param {boolean} [options.requireTenantId] - Whether tenant id field should be required. Default: **false**.
+   * @param {boolean} [options.shouldSelect] - Whether tenant id field should be be selected (e.g. returned as part of documents). Default: **false**.
    */
   constructor(schema, options) {
     this.options = options || {};
@@ -37,7 +38,7 @@ class MongoTenant {
       },
       schema: {
         get: () => schema,
-      }
+      },
     });
   }
 
@@ -47,11 +48,7 @@ class MongoTenant {
    * @returns {MongoTenant}
    */
   apply() {
-    this
-      .extendSchema()
-      .compoundIndexes()
-      .injectApi()
-      .installMiddleWare();
+    this.extendSchema().compoundIndexes().injectApi().installMiddleWare();
   }
 
   /**
@@ -60,7 +57,9 @@ class MongoTenant {
    * @returns {boolean}
    */
   isEnabled() {
-    return !!(typeof this.options.enabled === "undefined" ? true : this.options.enabled);
+    return !!(typeof this.options.enabled === "undefined"
+      ? true
+      : this.options.enabled);
   }
 
   /**
@@ -69,7 +68,7 @@ class MongoTenant {
    * @returns {string}
    */
   getTenantIdKey() {
-    return this.options.tenantIdKey || 'tenantId';
+    return this.options.tenantIdKey || "tenantId";
   }
 
   /**
@@ -87,7 +86,7 @@ class MongoTenant {
    * @returns {*|string}
    */
   getAccessorMethod() {
-    return this.options.accessorMethod || 'byTenant';
+    return this.options.accessorMethod || "byTenant";
   }
 
   /**
@@ -96,7 +95,7 @@ class MongoTenant {
    * @returns {*|string}
    */
   getTenantIdGetter() {
-    return this.options.tenantIdGetter || 'getTenantId';
+    return this.options.tenantIdGetter || "getTenantId";
   }
 
   /**
@@ -106,6 +105,15 @@ class MongoTenant {
    */
   isTenantIdRequired() {
     return this.options.requireTenantId === true;
+  }
+
+  /**
+   * Check if tenant id is a required field.
+   *
+   * @return {boolean}
+   */
+  shouldSelect() {
+    return this.options.shouldSelect === true;
   }
 
   /**
@@ -120,8 +128,8 @@ class MongoTenant {
   isCompatibleTo(plugin) {
     return (
       plugin &&
-      typeof plugin.getAccessorMethod === 'function' &&
-      typeof plugin.getTenantIdKey === 'function' &&
+      typeof plugin.getAccessorMethod === "function" &&
+      typeof plugin.getTenantIdKey === "function" &&
       this.getTenantIdKey() === plugin.getTenantIdKey()
     );
   }
@@ -138,7 +146,8 @@ class MongoTenant {
           index: true,
           type: this.getTenantIdType(),
           required: this.isTenantIdRequired(),
-        }
+          select: this.shouldSelect(),
+        },
       };
 
       this.schema.add(tenantField);
@@ -161,7 +170,7 @@ class MongoTenant {
         // skip if perserveUniqueKey of the index is set to true
         if (index[1].unique === true && index[1].preserveUniqueKey !== true) {
           let tenantAwareIndex = {
-            [this.getTenantIdKey()]: 1
+            [this.getTenantIdKey()]: 1,
           };
 
           for (let indexedField in index[0]) {
@@ -177,14 +186,17 @@ class MongoTenant {
         let pathOptions = path.options;
 
         // skip if perserveUniqueKey of an unique field is set to true
-        if (pathOptions.unique === true && pathOptions.preserveUniqueKey !== true) {
+        if (
+          pathOptions.unique === true &&
+          pathOptions.preserveUniqueKey !== true
+        ) {
           // delete the old index
           path._index = null;
           delete path.options.unique;
 
           // prepare new options
           let indexOptions = {
-            unique: true
+            unique: true,
           };
 
           // add sparse option if set in options
@@ -194,14 +206,18 @@ class MongoTenant {
 
           // add partialFilterExpression option if set in options
           if (pathOptions.partialFilterExpression) {
-            indexOptions.partialFilterExpression = pathOptions.partialFilterExpression;
+            indexOptions.partialFilterExpression =
+              pathOptions.partialFilterExpression;
           }
 
           // create a new one that includes the tenant id field
-          this.schema.index({
-            [this.getTenantIdKey()]: 1,
-            [key]: 1
-          }, indexOptions);
+          this.schema.index(
+            {
+              [this.getTenantIdKey()]: 1,
+              [key]: 1,
+            },
+            indexOptions
+          );
         }
       });
     }
@@ -224,7 +240,9 @@ class MongoTenant {
           return this.model(this.modelName);
         }
 
-        let modelCache = me._modelCache[this.modelName] || (me._modelCache[this.modelName] = {});
+        let modelCache =
+          me._modelCache[this.modelName] ||
+          (me._modelCache[this.modelName] = {});
 
         // lookup tenant-bound model in cache
         if (!modelCache[tenantId]) {
@@ -239,7 +257,7 @@ class MongoTenant {
 
       get mongoTenant() {
         return me;
-      }
+      },
     });
 
     return this;
@@ -254,8 +272,7 @@ class MongoTenant {
    * @returns {MongoTenantModel}
    */
   createTenantAwareModel(BaseModel, tenantId) {
-    let
-      tenantIdGetter = this.getTenantIdGetter(),
+    let tenantIdGetter = this.getTenantIdGetter(),
       tenantIdKey = this.getTenantIdKey();
 
     const db = this.createTenantAwareDb(BaseModel.db, tenantId);
@@ -281,15 +298,18 @@ class MongoTenant {
 
         if (Array.isArray(operations[0])) {
           pipeline = operations[0];
-        } else if (arguments.length === 1 || typeof arguments[1] === 'function') {
+        } else if (
+          arguments.length === 1 ||
+          typeof arguments[1] === "function"
+        ) {
           // mongoose 5.x compatibility
           pipeline = operations[0] = [operations[0]];
         }
 
         pipeline.unshift({
           $match: {
-            [tenantIdKey]: this[tenantIdGetter]()
-          }
+            [tenantIdKey]: this[tenantIdGetter](),
+          },
         });
 
         return super.aggregate.apply(this, operations);
@@ -308,7 +328,7 @@ class MongoTenant {
       }
 
       static remove(conditions, callback) {
-        if (arguments.length === 1 && typeof conditions === 'function') {
+        if (arguments.length === 1 && typeof conditions === "function") {
           callback = conditions;
           conditions = {};
         }
@@ -319,8 +339,7 @@ class MongoTenant {
       }
 
       static insertMany(docs, callback) {
-        let
-          me = this,
+        let me = this,
           tenantId = this[tenantIdGetter]();
 
         // Model.inserMany supports a single document as parameter
@@ -338,7 +357,13 @@ class MongoTenant {
             return callback && callback(err);
           }
 
-          return callback && callback(null, docs.map(doc => new me(doc)));
+          return (
+            callback &&
+            callback(
+              null,
+              docs.map((doc) => new me(doc))
+            )
+          );
         });
       }
 
@@ -357,13 +382,17 @@ class MongoTenant {
 
     // inherit all static properties from the mongoose base model
     for (let staticProperty of Object.getOwnPropertyNames(BaseModel)) {
-      if (MongoTenantModel.hasOwnProperty(staticProperty)
-      || ['arguments', 'caller'].indexOf(staticProperty) !== -1
+      if (
+        MongoTenantModel.hasOwnProperty(staticProperty) ||
+        ["arguments", "caller"].indexOf(staticProperty) !== -1
       ) {
         continue;
       }
 
-      let descriptor = Object.getOwnPropertyDescriptor(BaseModel, staticProperty);
+      let descriptor = Object.getOwnPropertyDescriptor(
+        BaseModel,
+        staticProperty
+      );
       Object.defineProperty(MongoTenantModel, staticProperty, descriptor);
     }
 
@@ -372,7 +401,10 @@ class MongoTenant {
       MongoTenantModel.discriminators = {};
 
       for (let key in BaseModel.discriminators) {
-        MongoTenantModel.discriminators[key] = this.createTenantAwareModel(BaseModel.discriminators[key], tenantId);
+        MongoTenantModel.discriminators[key] = this.createTenantAwareModel(
+          BaseModel.discriminators[key],
+          tenantId
+        );
       }
     }
 
@@ -408,12 +440,11 @@ class MongoTenant {
    * @returns {MongoTenant}
    */
   installMiddleWare() {
-    let
-      me = this,
+    let me = this,
       tenantIdGetter = this.getTenantIdGetter(),
       tenantIdKey = this.getTenantIdKey();
 
-    this.schema.pre('count', function(next) {
+    this.schema.pre("count", function (next) {
       if (this.model.hasTenantContext) {
         this._conditions[tenantIdKey] = this.model[tenantIdGetter]();
       }
@@ -421,7 +452,7 @@ class MongoTenant {
       next();
     });
 
-    this.schema.pre('find', function(next) {
+    this.schema.pre("find", function (next) {
       if (this.model.hasTenantContext) {
         this._conditions[tenantIdKey] = this.model[tenantIdGetter]();
       }
@@ -429,16 +460,7 @@ class MongoTenant {
       next();
     });
 
-
-    this.schema.pre('countDocuments', function(next) {
-        if (this.model.hasTenantContext) {
-            this._conditions[tenantIdKey] = this.model[tenantIdGetter]();
-        }
-
-        next();
-    });
-
-    this.schema.pre('findOne', function(next) {
+    this.schema.pre("countDocuments", function (next) {
       if (this.model.hasTenantContext) {
         this._conditions[tenantIdKey] = this.model[tenantIdGetter]();
       }
@@ -446,7 +468,7 @@ class MongoTenant {
       next();
     });
 
-    this.schema.pre('findOneAndRemove', function(next) {
+    this.schema.pre("findOne", function (next) {
       if (this.model.hasTenantContext) {
         this._conditions[tenantIdKey] = this.model[tenantIdGetter]();
       }
@@ -454,7 +476,15 @@ class MongoTenant {
       next();
     });
 
-    this.schema.pre('findOneAndUpdate', function(next) {
+    this.schema.pre("findOneAndRemove", function (next) {
+      if (this.model.hasTenantContext) {
+        this._conditions[tenantIdKey] = this.model[tenantIdGetter]();
+      }
+
+      next();
+    });
+
+    this.schema.pre("findOneAndUpdate", function (next) {
       if (this.model.hasTenantContext) {
         me._guardUpdateQuery(this);
       }
@@ -462,7 +492,7 @@ class MongoTenant {
       next();
     });
 
-    this.schema.pre('save', function(next) {
+    this.schema.pre("save", function (next) {
       if (this.constructor.hasTenantContext) {
         this[tenantIdKey] = this.constructor[tenantIdGetter]();
       }
@@ -470,7 +500,7 @@ class MongoTenant {
       next();
     });
 
-    this.schema.pre('update', function(next) {
+    this.schema.pre("update", function (next) {
       if (this.model.hasTenantContext) {
         me._guardUpdateQuery(this);
       }
@@ -478,7 +508,7 @@ class MongoTenant {
       next();
     });
 
-    this.schema.pre('updateMany', function(next) {
+    this.schema.pre("updateMany", function (next) {
       if (this.model.hasTenantContext) {
         me._guardUpdateQuery(this);
       }
@@ -496,8 +526,7 @@ class MongoTenant {
    * @private
    */
   _guardUpdateQuery(query) {
-    let
-      tenantIdGetter = this.getTenantIdGetter(),
+    let tenantIdGetter = this.getTenantIdGetter(),
       tenantIdKey = this.getTenantIdKey(),
       tenantId = query.model[tenantIdGetter](),
       $set = query._update.$set;
@@ -505,12 +534,12 @@ class MongoTenant {
     query._conditions[tenantIdKey] = tenantId;
 
     // avoid jumping tenant context when overwriting a model.
-    if ((tenantIdKey in query._update) || query.options.overwrite) {
+    if (tenantIdKey in query._update || query.options.overwrite) {
       query._update[tenantIdKey] = tenantId;
     }
 
     // avoid jumping tenant context from $set operations
-    if ($set && (tenantIdKey in $set) && $set[tenantIdKey] !== tenantId) {
+    if ($set && tenantIdKey in $set && $set[tenantIdKey] !== tenantId) {
       $set[tenantIdKey] = tenantId;
     }
   }
